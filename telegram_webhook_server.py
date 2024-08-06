@@ -45,5 +45,5 @@ app = FastAPI()
 
 @app.post("/tg_hook")
 async def tg_hook(update: Update):
-    print(Update.message.text)
+    print(update.message.text)
     return update
