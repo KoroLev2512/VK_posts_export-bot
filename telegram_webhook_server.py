@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from TelegramApi import *
+from VkApi import *
+import re
 
 
 class Chat(BaseModel):
@@ -41,9 +44,22 @@ class Update(BaseModel):
 
 
 app = FastAPI()
+tg_bot = TelegramApi("7468754032:AAGn_xvms7WJoFdOXZBDbBo1M7sY27AxwDo")
+vk_bot = VkApi("95797d9495797d9495797d943d96626c7d9957995797d94f3cb688c233dfd81783e9486", "5.199")
 
 
 @app.post("/tg_hook")
 async def tg_hook(update: Update):
-    print(update.message.text)
+    post_id = re.search(r'-?\d+_\d+', update.message.text).group(0)
+    response = vk_bot.wall_get_by_id(post_id)
+
+    tg_bot.send_message(update.message.from_.id, response['response']['items'][0]['text'])
+    for attachment in response['response']['items'][0]['attachments']:
+        if attachment['type'] == 'photo':
+            print(attachment['photo']['sizes'][-1]['url'])
+            tg_bot.send_document(update.message.from_.id, attachment['photo']['sizes'][-1]['url'])
+        elif attachment['type'] == 'doc':
+            print(attachment['doc']['url'])
+            tg_bot.send_document(update.message.from_.id, attachment['doc']['url'])
+
     return update
